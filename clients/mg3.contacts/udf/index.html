@@ -1,0 +1,302 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>UDF</title>
+    <link href="libs/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="libs/knockout/knockout.js"></script>
+    <script src="libs/knockout/knockout.mapping.js"></script>
+    <script src="libs/jQuery/jquery.js"></script>
+    <script src="libs/bootstrap/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand">UDF</a>
+    </nav>
+
+    <div class="container">
+        <div class="col-md-6">
+            <!--
+            <contacts-component params="{ data: $data.main }"></contacts-component>
+            -->
+            <span data-bind="visible: !HaveContacts()">No data registered.</span>
+            <div data-bind="visible: HaveContacts()">
+                <ul class="list-group" data-bind="foreach: Contacts()">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="#" data-bind="text: Name(),  click: $parent.SelectCurrent(Id())"> </a>
+                        <span data-bind="text: ' ( ' + Phone() + ' - ' + Email() + ' )'"></span>
+                        <span class="badge badge-primary badge-pill" data-bind="text: Id()"></span>
+                    </li>
+                </ul>
+            </div>
+            <div data-bind="visible: Current() != null">
+                <span data-bind="text: Current().Name()"></span> |
+                <span data-bind="text: Current().Phone()"></span> |
+                <span data-bind="text: Current().Email()"></span>
+            </div>
+        </div>
+
+        <div class="col-md-6" data-bind="with: Current()">
+            <div class="form-group">
+                <label for="txName">Name</label>
+                <input type="text" class="form-control" id="txName" placeholder="Enter name" data-bind="textInput: Name, valueUpdate: 'afterkeydown', style: { backgroundColor: $parent.InputBackground() }">
+                <small id="emailHelp" class="form-text text-muted">We'll never share your firstname.</small>
+            </div>
+            <div class="form-group">
+                <label for="txEmail">Email</label>
+                <input type="email" class="form-control" id="txEmail" placeholder="Enter email" data-bind="textInput: Email, valueUpdate: 'afterkeydown', style: { backgroundColor: $parent.InputBackground() }">
+                <small id="emailHelp" class="form-text text-muted">We'll never share your lastname.</small>
+            </div>
+            <div class="form-group">
+                <label for="txPhoneNumber">Phone number</label>
+                <input type="text" class="form-control" id="txPhoneNumber" placeholder="Phone number" data-bind="textInput: Phone, valueUpdate: 'afterkeydown', style: { backgroundColor: $parent.InputBackground() }">
+                <small id="emailHelp" class="form-text text-muted">We'll never share your phone number.</small>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="chkForm">
+                <label class="form-check-label" for="chkForm">Check me out</label>
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn btn-primary" data-bind="click: $parent.SaveContact, enable: $parent.CanSave()">Save contact</button>
+                <button type="button" class="btn btn-success" data-bind="click: $parent.NewContact, enable: $parent.CanNew()">New contact</button>
+                <button type="button" class="btn btn-danger" data-bind="click: $parent.DeleteContact, enable: $parent.CanDelete()">Delete contact</button>
+                <button type="button" class="btn btn-primary" data-bind="click: $parent.CancelContact">Cancel contact</button>
+            </div>
+        </div>
+    </div>
+
+    <template id="contacts-template" type="text/html">
+        <span data-bind="visible: !HaveContacts()">No data registered.</span>
+        <div data-bind="visible: HaveContacts()">
+            <ul class="list-group" data-bind="foreach: Contacts()">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="#" data-bind="text: Name(),  click: $parent.SelectCurrent(Id())"> </a>
+                    <span data-bind="text: ' ( ' + Phone() + ' - ' + Email() + ' )'"></span>
+                    <span class="badge badge-primary badge-pill" data-bind="text: Id()"></span>
+                </li>
+            </ul>
+        </div>
+    </template>
+
+    <script type="text/javascript">
+
+        function Contact(id, name, email, phone) {
+            var self = this;
+
+            self.Id = ko.observable(id);
+            self.Name = ko.observable(name);
+            self.Email = ko.observable(email);
+            self.Phone = ko.observable(phone);
+
+            return self;
+        }
+
+        function MainViewModel() {
+            var self = this;
+
+            self.Current = ko.observable(new Contact());
+            self.Contacts = ko.observableArray([]);
+            self.UpdateMode = ko.pureComputed({
+                read: function () {
+                    return self.Current().Id() > 0;
+                },
+                owner: self
+            });
+            self.InputBackground = ko.observable("transparent");
+            self.CanSave = ko.observable(true);
+            self.CanNew = ko.observable(true);
+            self.CanDelete = ko.observable(true);
+
+            self.NrContacts = ko.pureComputed({
+                read: function () {
+                    return self.Contacts().length;
+                },
+                write: function (value) {
+                    return value;
+                },
+                owner: self
+            });
+
+            self.HaveContacts = ko.pureComputed({
+                read: function () {
+                    return self.NrContacts() > 0;
+                },
+                write: function (value) {
+                    if (!value)
+                        self.NrContacts(0);
+                },
+                owner: self
+            });
+
+            self.LoadContacts = function () {
+                isBusy = true;
+                if (isLocal) {
+                    self.Contacts.push(new Contact(1, "Mario Russo", "mario.russo@outlook.it", "+39 389 319 5241"));
+                    self.Current(self.Contacts()[0]);
+                    self.NrContacts(1);
+                } else {
+                    Bridge.contacts("selectall").then(
+                        function (results) {
+                            if (!results.InError) {
+                                console.log("loaded contacts");
+                                self.Contacts([]);
+                                results.Entities.forEach(function (e, i) {
+                                    self.Contacts.push(new Contact(e.Id, e.Name, e.Email, e.Phone));
+                                });
+                                self.Current(self.Contacts()[0]);
+
+                                action.ButtonManager(true, true, true);
+                            } else {
+                                console.log("contacts not loaded");
+                            }
+                        },
+                        function (reason) {
+                            console.error(reason);
+                        }
+                    );
+                }
+                isBusy = true;
+
+                return self;
+            };
+
+            self.SaveContact = function () {
+                if (self.Current() !== undefined) {
+                    var entity = ko.mapping.toJS(self.Current());
+                    console.log(entity);
+
+                    isBusy = true;
+                    if (isLocal) {
+                        console.log("Outer CEF");
+                        self.Contacts.push(new Contact(entity.Id, entity.Name, entity.Email, entity.Phone));
+                        self.InputBackground("transparent");
+                    } else {
+                        console.log("In CEF");
+
+                        var command = self.UpdateMode() ? "update" : "insert";
+                        Bridge.contacts(command, entity).then(
+                            function (results) {
+                                var entity = ko.mapping.toJS(results.Entity);
+                                if (!self.UpdateMode()) self.Contacts.push(new Contact(entity.Id, entity.Name, entity.Email, entity.Phone));
+                                self.InputBackground("transparent");
+
+                                action.ButtonManager(false, false, false);
+
+                                Bridge.showMessage("Saved contact with " + results.Entity.Id + " id", "Save operation").then(null, null);
+                            },
+                            function (reason) {
+                                Bridge.showMessage("Error -> " + reason).then(null, null);
+                            }
+                        );
+                    }
+                    isBusy = false;
+                } else {
+                    console.warn("No data to save...");
+                }
+            };
+
+            self.NewContact = function () {
+                isBusy = true;
+                action.ButtonManager(true, false, false);
+                var entity = ko.mapping.toJS(self.Current());
+                self.Current(new Contact(0, entity.Name, entity.Email, entity.Phone));
+                self.InputBackground("lightyellow");
+                isBusy = false;
+            };
+
+            self.DeleteContact = function () {
+                isBusy = true;
+                var entity = ko.mapping.toJS(self.Current());
+                Bridge.contacts("delete", entity).then(
+                    function (results) {
+                        var entity = ko.mapping.toJS(results.Entity);
+                        self.Contacts.remove(function (c) {
+                            return entity.Id > 0 ? c.Id === entity.Id : c.Email === entity.Email;
+                        });
+                        Bridge.showMessage("Deleted contact with " + entity.Id + " id", "Delete operation").then(null, null);
+                    },
+                    function (reason) {
+                        Bridge.showMessage("Error -> " + reason).then(null, null);
+                    }
+                );
+                isBusy = false;
+            };
+
+            self.CancelContact = function () {
+                isBusy = true;
+                self.InputBackground("transparent");
+                self.Current(self.Contacts()[0]);
+                action.ButtonManager(true, true, true);
+                isBusy = false;
+            };
+
+            self.SelectCurrent = function (id) {
+                var contact = ko.utils.arrayFilter(self.Contacts(), function (c) {
+                    return c.Id() === id;
+                });
+
+                self.Current(contact[0]);
+            };
+
+            var action = {
+                ButtonManager: function (cansave, cannew, candelete) {
+                    self.CanSave(cansave);
+                    self.CanNew(cannew);
+                    self.CanDelete(candelete);
+                }
+            };
+
+            return self;
+        }
+
+        function ContactsViewModel(params) {
+            var self = this;
+
+            self.Current = ko.observable(params.data.Current());
+            self.Contacts = ko.observableArray(params.data.Contacts());
+            self.NrContacts = ko.observable(params.data.NrContacts());
+            self.HaveContacts = ko.observable(params.data.HaveContacts());
+
+            self.SelectCurrent = function (id) {
+                var contact = ko.utils.arrayFilter(self.Contacts(), function (c) {
+                    return c.Id() === id;
+                });
+
+                self.Current(contact[0]);
+            };
+
+            return self;
+        }
+
+        ko.components.register(
+            'contacts-component',
+            {
+                viewModel: ContactsViewModel,
+                template: { element: 'contacts-template' }
+            }
+        );
+
+        (async function () {
+            window.isLocal = typeof CefSharp === "undefined";
+            if (!isLocal) await CefSharp.BindObjectAsync("BridgeCommandService", "Bridge");
+
+            window.main = new MainViewModel();
+            window.main.LoadContacts();
+            ko.applyBindings(window.main, document.querySelector(".container"));
+
+            window.onerror = function (message, file, line, col, error) {
+                console.error("Error occurred: " + error.message);
+                return false;
+            };
+
+            window.addEventListener("error", function (e) {
+                console.error("Error occurred: " + e.error.message);
+                return false;
+            });
+        })();
+
+    </script>
+</body>
+</html>
