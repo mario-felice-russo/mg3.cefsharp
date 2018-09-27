@@ -1,0 +1,1 @@
+﻿La versione di chromium installata con il CEF corrisponde alla 2.41 èer Chrome >= 67 && <= 68

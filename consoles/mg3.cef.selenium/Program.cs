@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Remote;
+using System;
+using System.IO;
+using System.Threading;
 
 namespace mg3.cef.selenium
 {
@@ -10,31 +11,53 @@ namespace mg3.cef.selenium
     {
         static void Main(string[] args)
         {
-            // Path to the ChromeDriver executable.
-            System.setProperty("webdriver.chrome.driver", "c:/temp/chromedriver.exe");
+            string spath = Environment.CurrentDirectory;
 
-            //For setting and defining variables
-            System.Environment.SetEnvironmentVariable("webdriver.chrome.driver", @"..\", EnvironmentVariableTarget.User);
-            System.Environment.SetEnvironmentVariable("DBname", comboBoxDataBaseName.Text, EnvironmentVariableTarget.User);
-
-            //For getting
-            string Pathsave = System.Environment.GetEnvironmentVariable("PathDB", EnvironmentVariableTarget.User);
-            string DBselect = System.Environment.GetEnvironmentVariable("DBname", EnvironmentVariableTarget.User);
+            // --Environment.SetEnvironmentVariable("Path", spath + @"\drivers\chromedriver.exe");
 
             ChromeOptions options = new ChromeOptions();
-            // Path to the CEF executable.
-            options.setBinary("c:/temp/cef_binary_3.2171.1979_windows32_client/Release/cefclient.exe");
-            // Port to communicate on. Required starting with ChromeDriver v2.41.
-            options.addArguments("remote-debugging-port=12345");
 
-            WebDriver driver = new ChromeDriver(options);
-            driver.get("http://www.google.com/xhtml");
-            sleep(3000);  // Let the user actually see something!
-            WebElement searchBox = driver.findElement(By.name("q"));
-            searchBox.sendKeys("ChromeDriver");
-            searchBox.submit();
-            sleep(3000);  // Let the user actually see something!
-            driver.quit();
+            options.AcceptInsecureCertificates = true;
+            
+            // options.BinaryLocation = spath + @"\drivers\chromedriver.exe";
+            options.AddArgument("verbose");
+            options.AddArgument("remote-debugging-port=8088");
+            options.AddArgument("log-path=chromedriver.log");
+            options.AddArgument("--log-level=ALL");
+
+            options.BinaryLocation = @"E:\Works\mg3.cefsharp\clients\mg3.contacts\bin\x64\Debug\mg3.contacts.exe";
+
+            /*
+            options.AddArgument("--disable-gpu");
+            options.AddArgument("--no-sandbox");
+            options.AddArgument("--ignore-certificate-errors");
+            options.AddArgument("--disable-web-security");
+            options.AddArgument("--allow-insecure-localhost");
+            options.AddArgument("--allow-running-insecure-content");
+            options.AddArgument("--acceptInsecureCerts=true");
+            options.AddArgument("--proxy-server='direct://'");
+            options.AddArgument("--proxy-bypass-list=*");
+            options.AddArgument("--disable-extensions");
+            options.AddArgument("--disable-infobars");
+            options.AddArgument("--window-size=1920,1080");
+            options.AddArgument("--incognito");
+            options.AddArgument("--headless");
+            */
+
+            ChromeDriverService service = ChromeDriverService.CreateDefaultService(@"E:\Works\mg3.cefsharp\consoles\mg3.cef.selenium\drivers\");
+
+            options.SetLoggingPreference(OpenQA.Selenium.LogType.Driver, OpenQA.Selenium.LogLevel.All);
+            options.SetLoggingPreference(LogType.Browser, LogLevel.All);
+            options.SetLoggingPreference(LogType.Driver, LogLevel.All);
+            // options.SetLoggingPreference(LogType.Client, LogLevel.All);
+            // options.SetLoggingPreference(LogType.Profiler, LogLevel.All);
+            // options.SetLoggingPreference(LogType.Server, LogLevel.All);
+
+            // ChromeDriver driver = new ChromeDriver(spath + @"\drivers\", options);
+            ChromeDriver driver = new ChromeDriver(service, options);
+            driver.Navigate().GoToUrl("https://www.google.it/");
+            
+            driver.Quit();
         }
     }
 }

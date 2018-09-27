@@ -22,6 +22,7 @@ namespace Services
             Config = new CefSharpConfiguration()
             {
                 Address = string.Format("{0}:{0}/index.html", schemename),
+                // Address = "chrome://version",
                 SchemeList = new List<string>() { schemename },
                 SchemeName = schemename,
                 ShowDevtools = false
