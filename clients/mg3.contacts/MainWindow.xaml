@@ -22,18 +22,17 @@
             <ColumnDefinition Width="120"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="40"></RowDefinition>
-            <RowDefinition Height="40"></RowDefinition>
+            <RowDefinition Height="42"></RowDefinition>
             <RowDefinition Height="1*"></RowDefinition>
             <RowDefinition Height="3*"></RowDefinition>
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="2" Margin="4">
-            <Button Name="btNewContact" Command="{Binding OnNewContact}" Width="120" Height="32" Margin="4 0">Add contact</Button>
-            <Button Name="btReload" Command="{Binding OnReload}" Width="120" Height="32" Margin="4 0">Reload</Button>
-            <Button Name="btDevTools" Command="{Binding OnDevTools}" Width="120" Height="32" Margin="4 0">Dev tools</Button>
+            <Button Name="btNewContact" Style="{DynamicResource RoundCorner}" Background="{StaticResource Primary}" Foreground="White" Command="{Binding OnNewContact}" Width="120" Margin="4 0">Add contact</Button>
+            <Button Name="btReload" Style="{DynamicResource RoundCorner}" Background="{StaticResource Success}" Foreground="White" Command="{Binding OnReload}" Width="120" Margin="4 0">Reload</Button>
+            <Button Name="btDevTools" Style="{DynamicResource RoundCorner}" Background="{StaticResource Warning}" Foreground="White" Command="{Binding OnDevTools}" Width="120" Margin="4 0">Dev tools</Button>
         </StackPanel>
-        <Button Name="btExit" Command="{Binding OnExit}" Grid.Column="2" Margin="4">Exit</Button>
+        <Button Name="btExit" Style="{DynamicResource RoundCorner}" Background="#337ab7" Foreground="White" Command="{Binding OnExit}" Grid.Column="2" Margin="4">Exit</Button>
         <Grid VerticalAlignment="Top" Grid.Row="1" Grid.ColumnSpan="2" Margin="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -42,11 +41,14 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
-            <TextBox Name="txSearch" Text="{Binding SearchString}" Grid.Column="0" Margin="4,0,0,0" />
-            <Button Name="btSearch" Command="{Binding OnSearch}" Height="32" Margin="4 0" Grid.Column="1">Search contact</Button>
         </Grid>
 
-        <ListView Name="ContactListView" Grid.Row="2" Grid.ColumnSpan="2" ItemsSource="{Binding ContactList}" ScrollViewer.VerticalScrollBarVisibility="Visible" Margin="6">
+        <ListView Name="ContactListView" 
+                  Grid.Row="1" Grid.ColumnSpan="3" 
+                  ItemsSource="{Binding ContactList}"
+                  SelectedItem="{Binding Contact}"                                 
+                  SelectionMode="Single"
+                  ScrollViewer.VerticalScrollBarVisibility="Visible" Margin="6">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel>
@@ -58,6 +60,6 @@
             </ListView.ItemTemplate>
         </ListView>
 
-        <cef:ChromiumWebBrowser Name="Browser" Address="{Binding CurrentAddress}" Grid.Row="3" Grid.ColumnSpan="2" BorderThickness="1" />
+        <cef:ChromiumWebBrowser Name="Browser" Address="{Binding CurrentAddress}" Grid.Row="2" Grid.ColumnSpan="3" BorderThickness="1" />
     </Grid>
 </Window>

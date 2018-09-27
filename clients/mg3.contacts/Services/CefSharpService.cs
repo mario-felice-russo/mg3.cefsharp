@@ -4,8 +4,6 @@ using Handlers;
 using Models;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Windows.Threading;
 
 namespace Services
 {

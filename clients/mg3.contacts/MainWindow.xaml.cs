@@ -92,6 +92,26 @@ namespace mg3.contacts
         public string Address { get { return _address; } set { _address = value; NotifyPropertyChanged(); } }
         private string _address = null;
 
+        public Contact Contact
+        {
+            get { return _contact; }
+            set
+            {
+                _contact = value;
+                if (_contact == null)
+                {
+                    if (_contactList != null && _contactList.Count > 0)
+                    {
+                        _contact = _contactList[0];
+                    }
+                }
+
+                Task.Factory.StartNew(() => ExecuteJavascriptAsync("window.main.SelectCurrent(" + _contact.Id + ");", "Caricamento contatti FALLITO"));
+                NotifyPropertyChanged();
+            }
+        }
+        private Contact _contact = null;
+
         #endregion Properties
 
         #region Commands
@@ -117,27 +137,6 @@ namespace mg3.contacts
             }
         }
         private RelayCommand _onNewContact = null;
-
-        public RelayCommand OnSearch
-        {
-            get
-            {
-                return _onSearch ?? (
-                  _onSearch = new RelayCommand(
-                    (p) =>
-                    {
-                        if (!_isBusy)
-                        {
-                            IsBusy = true;
-                            // Search by content of txSearch
-                            IsBusy = false;
-                        }
-                    },
-                    (p) => !_isBusy)
-                );
-            }
-        }
-        private RelayCommand _onSearch = null;
 
         public RelayCommand OnReload
         {
@@ -257,9 +256,25 @@ namespace mg3.contacts
 
         #region Internal methods
 
+        private async Task<bool> ExecuteJavascriptAsync(string jsScript, string messageFail)
+        {
+            JavascriptResponse response = null;
+            bool success = false;
+
+            if (Browser.CanExecuteJavascriptInMainFrame)
+            {
+                response = await Browser.EvaluateScriptAsync(jsScript);
+            }
+
+            if (!(success = response.Success)) MessageBox.Show(messageFail);
+            return success;
+        }
+
         private void OnReadDatabase()
         {
             List<Contact> contacts = null;
+            bool success = false;
+
             Task.Run(
                 async () =>
                 {
@@ -275,6 +290,8 @@ namespace mg3.contacts
                                     ContactList.Clear();
                                 foreach (Contact c in contacts)
                                     ContactList.Add(c);
+
+                                Task.Factory.StartNew(() => ExecuteJavascriptAsync("window.main.LoadContacts();", "Caricamento contatti FALLITO"));
                             }
                         );
                     }
